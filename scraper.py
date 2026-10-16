@@ -23,7 +23,7 @@ def add_to_notion(title, price, area, link):
                 "rich_text": [{"text": {"content": price}}]
             },
             "エリア": {
-                "rich_text": [{"text": {"content": area}}]
+                "multi_select": [{"name": area}]
             },
             "ジモティーリンク": {
                 "url": link
