@@ -76,25 +76,44 @@ def scrape_jmty():
     for target in TARGET_URLS:
         res = requests.get(target["url"], headers=ua_headers)
         if res.status_code != 200:
+            print(f"取得失敗: {target['url']} (Status: {res.status_code})")
             continue
 
         soup = BeautifulSoup(res.text, "html.parser")
-        items = soup.find_all("li", class_="p-item")
+        
+        # 記事リンク（aタグ）を広めに検索
+        articles = soup.select("a[href*='/articles/']")
+        found_count = 0
 
-        for item in items:
-            title_elem = item.find("div", class_="p-item__title")
-            price_elem = item.find("div", class_="p-item__price")
-            link_elem = title_elem.find("a") if title_elem else None
+        for a_tag in articles:
+            link = a_tag.get("href", "")
+            # 詳細ページへの直リンクかつドメイン補完
+            if not link.startswith("http"):
+                link = "https://jmty.jp" + link
+            
+            # 親要素や周辺からタイトルと価格を取得
+            parent = a_tag.find_parent("li") or a_tag.find_parent("div")
+            if not parent:
+                continue
 
-            if title_elem and link_elem:
-                title = title_elem.text.strip()
-                link = link_elem.get("href", "")
-                price = price_elem.text.strip() if price_elem else "価格記載なし"
+            title = a_tag.text.strip()
+            if not title:
+                title_elem = parent.select_one(".p-item__title, .p-article-pl-title, h2")
+                title = title_elem.text.strip() if title_elem else ""
 
-                if link and link not in existing_links:
-                    add_to_notion(title, price, target["area"], link)
-                    existing_links.add(link)
-                    print(f"【新着発見】{title} ({price})")
+            if not title or len(title) < 2:
+                continue
+
+            price_elem = parent.select_one(".p-item__price, .p-article-pl-price, .price")
+            price = price_elem.text.strip() if price_elem else "価格記載なし"
+
+            if link not in existing_links:
+                add_to_notion(title, price, target["area"], link)
+                existing_links.add(link)
+                found_count += 1
+                print(f"【新着発見】{title} ({price})")
+
+        print(f"エリア[{target['area']}]の巡回完了: {found_count}件追加")
 
 if __name__ == "__main__":
     scrape_jmty()
