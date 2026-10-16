@@ -12,6 +12,8 @@ headers = {
 
 def add_to_notion(title, price, area, link):
     url = "https://api.notion.com/v1/pages"
+    
+    # すべて文字形式(rich_text)で安全に送る設定
     data = {
         "parent": {"database_id": DATABASE_ID},
         "properties": {
@@ -22,7 +24,7 @@ def add_to_notion(title, price, area, link):
                 "rich_text": [{"text": {"content": price}}]
             },
             "エリア": {
-                "select": {"name": area}
+                "rich_text": [{"text": {"content": area}}]
             },
             "ジモティーリンク": {
                 "url": link
