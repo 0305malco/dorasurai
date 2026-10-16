@@ -11,7 +11,7 @@ headers = {
     "Notion-Version": "2022-06-28",
 }
 
-# 正しいジモティーのURL（大阪の本・雑誌、奈良の不動産）
+# 巡回ターゲット（大阪の古本・レトロ、奈良の不動産）
 TARGET_URLS = [
     {"url": "https://jmty.jp/osaka/sale-boo", "area": "大阪・古本"},
     {"url": "https://jmty.jp/nara/est", "area": "奈良・不動産"}
@@ -80,29 +80,35 @@ def scrape_jmty():
             continue
 
         soup = BeautifulSoup(res.text, "html.parser")
-        
-        # 記事リンク（aタグ）を広めに検索
-        articles = soup.select("a[href*='/articles/']")
         found_count = 0
 
-        for a_tag in articles:
-            link = a_tag.get("href", "")
+        # ジモティーの記事要素をすべて抽出
+        items = soup.find_all("li", class_=lambda c: c and "p-item" in c)
+        if not items:
+            # 別のクラスパターンもカバー
+            items = soup.find_all("div", class_=lambda c: c and "p-item" in c)
+
+        for item in items:
+            link_tag = item.find("a", href=True)
+            if not link_tag:
+                continue
+
+            link = link_tag["href"]
             if not link.startswith("http"):
                 link = "https://jmty.jp" + link
-            
-            parent = a_tag.find_parent("li") or a_tag.find_parent("div")
-            if not parent:
+
+            # 重複記事や広告リンクの除外
+            if "/articles/" not in link:
                 continue
 
-            title = a_tag.text.strip()
+            # タイトル取得
+            title = link_tag.text.strip()
             if not title:
-                title_elem = parent.select_one(".p-item__title, .p-article-pl-title, h2")
-                title = title_elem.text.strip() if title_elem else ""
+                title_elem = item.find(class_=lambda c: c and ("title" in c or "name" in c))
+                title = title_elem.text.strip() if title_elem else "タイトル不明"
 
-            if not title or len(title) < 2:
-                continue
-
-            price_elem = parent.select_one(".p-item__price, .p-article-pl-price, .price")
+            # 価格取得
+            price_elem = item.find(class_=lambda c: c and "price" in c)
             price = price_elem.text.strip() if price_elem else "価格記載なし"
 
             if link not in existing_links:
