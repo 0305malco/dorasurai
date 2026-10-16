@@ -13,7 +13,6 @@ headers = {
 def add_to_notion(title, price, area, link):
     url = "https://api.notion.com/v1/pages"
     
-    # すべて文字形式(rich_text)で安全に送る設定
     data = {
         "parent": {"database_id": DATABASE_ID},
         "properties": {
@@ -32,13 +31,14 @@ def add_to_notion(title, price, area, link):
         }
     }
     response = requests.post(url, headers=headers, json=data)
+    print(f"ステータスコード: {response.status_code}")
+    print(f"レスポンス詳細: {response.text}")
     return response.status_code
 
 if __name__ == "__main__":
-    status = add_to_notion(
+    add_to_notion(
         title="【完全自動テスト】大阪・昭和レトロ古書＆奈良訳あり平屋 巡回ロボ起動", 
         price="0円", 
         area="大阪・古本", 
         link="https://jmty.jp"
     )
-    print(f"ステータスコード: {status}")
