@@ -11,10 +11,10 @@ headers = {
     "Notion-Version": "2022-06-28",
 }
 
-# 巡回ターゲット（大阪の古本・レトロ、奈良の不動産・訳ありなど）
+# 正しいジモティーのURL（大阪の本・雑誌、奈良の不動産）
 TARGET_URLS = [
-    {"url": "https://jmty.jp/osaka/sale-book/g-all", "area": "大阪・古本"},
-    {"url": "https://jmty.jp/nara/est-all/g-all", "area": "奈良・不動産"}
+    {"url": "https://jmty.jp/osaka/sale-boo", "area": "大阪・古本"},
+    {"url": "https://jmty.jp/nara/est", "area": "奈良・不動産"}
 ]
 
 # Notionにすでに登録済みのリンク一覧を取得（二重登録を防ぐため）
@@ -87,11 +87,9 @@ def scrape_jmty():
 
         for a_tag in articles:
             link = a_tag.get("href", "")
-            # 詳細ページへの直リンクかつドメイン補完
             if not link.startswith("http"):
                 link = "https://jmty.jp" + link
             
-            # 親要素や周辺からタイトルと価格を取得
             parent = a_tag.find_parent("li") or a_tag.find_parent("div")
             if not parent:
                 continue
